@@ -1,0 +1,402 @@
+
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="referer" content="never" />
+    <meta name="renderer" content="webkit">
+    <title>Android Panel</title>
+
+    <link href="../static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../static/css/test.css" rel="stylesheet">
+    <script src="../static/js/jquery.min.js"></script>
+    <!-- <script src="../static/js/echarts.min.js"></script> -->
+    <script src="../static/js/circleChart.min.js"></script>
+    <script src="../static/js/apexcharts.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"></script>
+
+</head>
+<body>
+	<div id="app">
+		<div class="wrapper">
+			<div class="sidebar">
+				<div class="platform-logo">
+					<img src="../static/img/logo.png" class="mock-logo">
+					<span class="logo-txt">A - P</span>
+				</div>
+				<div class="sidebar-auto">
+					<ul class="menu">
+						<li {% if page == "Dashboard" %}class="active"{% endif %}>
+							<a href="/" class="menu_home">Dashboard</a>
+						</li>
+						<li {% if page == "Processes" %}class="active"{% endif %}>
+							<a href="/Processes" class="menu_home">Processes</a>
+						</li>
+						<l{% if page == "Others" %}class="active"{% endif %}i>
+							<a href="/Others" class="menu_home">Others</a>
+						</li>
+					</ul>
+				</div>
+
+			</div>
+			<div class="content-box">
+				<div class="content" style="margin: 0 0 0 0;background-color: #303846;">
+					<div class="home-container" style="margin: 0 0;">
+						<span >Dev-info:</span>
+						<span >{{ hostname }}</span>
+						<span >running:  </span>
+						<span >{{ running }}</span>
+					</div>
+				</div>
+				<div class="content">
+                    <ul class="home-container">
+                        <li class="dev-info" style="background-color: #fffaf0;">
+                            <div class="dev-info-header" style="border-bottom: 1px solid #eee;height: 30px;line-height: 30px;">
+                                <span>设备概览</span>
+                            </div>
+                            <div style="margin-left: 25px;margin-top: 10px;margin-bottom: 10px">
+                                <span >厂商: {{ devInfo[0] }}</span><br>
+                                <span>设备: {{ devInfo[1] }}</span><br>
+{#                                <span>分辨率:1280x720</span><br>#}
+                                <span>CPU信息: {{ devInfo[2] }}</span><br>
+                                <span>GPU信息: {{ devInfo[3] }}</span><br>
+                                <span>构建日期: {{ devInfo[4] }}</span><br>
+                            </div>
+                            
+                        </li>
+                        <li class="dev-info" style="border: none;">
+                            <div class="dev-info-header">
+                                <span>CPU使用率</span>
+                            </div>
+                            <div class="CPUChart"></div>   
+                        </li>
+                        <li class="dev-info" style="border: none;">
+                            <div class="dev-info-header">
+                                <span>RAM使用率</span>
+                            </div>
+                            <div class="RAMChart"></div>   
+                        </li>
+                        <li class="dev-info" style="border: none;">
+                            <div class="dev-info-header">
+                                <span>FPS帧数</span>
+                            </div>
+                            <div class="FPSChart"></div>   
+                        </li>
+                        <li class="dev-info" style="border: none;">
+                            <div class="dev-info-header">
+                                <span>DISK使用率</span>
+                            </div>
+                            <div class="DISKChart"></div>   
+                        </li>
+                    </ul>
+				</div>
+                <div class="content">
+                    <ul class="home-container" style="margin-bottom: 0">
+                        <li style="width: 50%;">
+                            <div class="charts-header">
+                                <span>NET</span>
+                                <ul>
+                                    <li>
+                                        <p><span class="icobox"></span>上传</p>
+                                        <a id='up'>load..</a>
+                                    </li>
+                                    <li>
+                                        <p><span class="icobox" style="background-color: #52a9ff;"></span>下载</p>
+                                        <a id='down'>load..</a>
+                                    </li>
+                                    <li>
+                                        <p>总上传</p>
+                                        <a id='upT'>load..</a>
+                                    </li>
+                                    <li>
+                                        <p>总下载</p>
+                                        <a id='downT'>load..</a>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div id="net-chart">
+                                
+                            </div>
+                        </li>
+                        <li style="width: 50%;">
+                            <div class="charts-header">
+                                <span>I/O</span>
+                                <ul>
+                                    <li>
+                                        <p><span class="icobox"></span>读取</p>
+                                        <a id='read'>load..</a>
+                                    </li>
+                                    <li>
+                                        <p><span class="icobox" style="background-color: #52a9ff;"></span>写入</p>
+                                        <a id='write'>load..</a>
+                                    </li>
+                                    <li>
+                                        <p>总读取</p>
+                                        <a id='readT'>load..</a>
+                                    </li>
+                                    <li>
+                                        <p>总写入</p>
+                                        <a id='writeT'>load..</a>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div id="io-chart">
+                                
+                            </div>
+                            
+                        </li>
+
+                    </ul>
+                </div>
+			</div>		
+		</div>
+	</div>
+    <div class="footer">
+        <span>版权所有 @ 科大讯飞股份有限公司</span>
+    </div>
+	{% block script %}
+    <script type="text/javascript">
+        //格式化日期
+        function dateFormat(thisDate, fmt) {
+            var o = {
+                "M+": thisDate.getMonth() + 1,
+                "d+": thisDate.getDate(),
+                "h+": thisDate.getHours(),
+                "m+": thisDate.getMinutes(),
+                "s+": thisDate.getSeconds(),
+                "q+": Math.floor((thisDate.getMonth() + 3) / 3),
+                "S": thisDate.getMilliseconds()
+            };
+            if (/(y+)/.test(fmt))
+                fmt = fmt.replace(RegExp.$1, (thisDate.getFullYear() + "").substr(4 - RegExp.$1.length));
+            for (var k in o)
+                if (new RegExp("(" + k + ")").test(fmt))
+                    fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+            return fmt;
+        }
+        function getRandom() {
+          return Math.floor((Math.random()*100)+1);
+        }
+        $(".CPUChart").circleChart({
+              value: 0,
+              startAngle: 180,
+              speed: 500,
+              text: 'load..',
+              size: 120,
+              animation: "linearTween"
+           });
+        $(".RAMChart").circleChart({
+              value: 0,
+              startAngle: 180,
+              speed: 500,
+              text: 'load..',
+              size: 120,
+              animation: "linearTween"
+           });
+        $(".FPSChart").circleChart({
+              value: 0,
+              startAngle: 180,
+              speed: 500,
+              text: 'load..',
+              size: 120,
+              animation: "linearTween"
+           });
+        $(".DISKChart").circleChart({
+              value: 0,
+              startAngle: 180,
+              speed: 500,
+              text: 'load..',
+              size: 120,
+              animation: "linearTween"
+           });
+        var netoptions = {
+            chart: {
+                height: 350,
+                type: 'area',
+                animations: {
+                  enabled: true,
+                  easing: 'linear',
+                  dynamicAnimation: {
+                    speed: 1000
+                  }
+                },
+            },
+            dataLabels: {
+                enabled: false
+            },
+            stroke: {
+                curve: 'smooth'
+            },
+            series: [{
+                name: 'up',
+                data: [[new Date().getTime(),0]]
+            }, {
+                name: 'down',
+                data: [[new Date().getTime(),0]]
+            }],
+            xaxis: {
+                type: 'datetime',
+                range: 10000               
+            },
+            yaxis: {
+                decimalsInFloat: 2,
+            }
+        }
+        var iooptions = {
+            chart: {
+                height: 350,
+                type: 'area',
+                animations: {
+                  enabled: true,
+                  easing: 'linear',
+                  dynamicAnimation: {
+                    speed: 1000
+                  }
+                },
+            },
+            dataLabels: {
+                enabled: false
+            },
+            stroke: {
+                curve: 'smooth'
+            },
+            series: [{
+                name: 'read',
+                data: [[new Date().getTime(),0]]
+            }, {
+                name: 'write',
+                data: [[new Date().getTime(),0]]
+            }],
+            xaxis: {
+                type: 'datetime',
+                range: 10000               
+            },
+            yaxis: {
+                decimalsInFloat: 2,
+            }
+        }
+        var iochart = new ApexCharts(
+            document.querySelector("#io-chart"),
+            iooptions
+        );
+
+        iochart.render();
+
+        var netchart = new ApexCharts(
+            document.querySelector("#net-chart"),
+            netoptions
+        );
+
+        netchart.render();
+
+        
+
+        $(document).ready(function() {
+            namespace = '/showPage';
+            var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port + namespace)
+
+            // socket.on('connect', function() {
+            //     socket.emit('connect_event', {data: 'connect'});
+            // })
+
+            socket.on('server_response', function(msg) {
+                // socket.emit('heartbeat', {data: 'send success'});
+                console.log('Received #' + ': ' + JSON.stringify(msg));
+                if (1 == msg.category){
+                   $(".CPUChart").circleChart({
+                      value: msg.data,
+                      redraw: false,
+                      speed: 300,
+                      startAngle: 180,
+                      text: 0 + '%',
+                      onDraw: function(el, circle){
+                         $(".circleChart_text", el).html(msg.data + '%');
+                      }
+                   });
+                }
+                if (2 == msg.category){
+                   $(".RAMChart").circleChart({
+                      value: msg.usage,
+                      redraw: false,
+                      speed: 300,
+                      startAngle: 180,
+                      text: 0 + '%',
+                      onDraw: function(el, circle){
+                         $(".circleChart_text", el).html(msg.usage + '%');
+                      }
+                   });
+                }
+                if (3 == msg.category){
+                   $(".FPSChart").circleChart({
+                      value: msg.cent,
+                      redraw: false,
+                      speed: 300,
+                      startAngle: 180,
+                      text: 0,
+                      onDraw: function(el, circle){
+                         $(".circleChart_text", el).html(msg.value);
+                      }
+                   });
+                }
+                if (4 == msg.category){
+                   $(".DISKChart").circleChart({
+                      value: msg.value,
+                      redraw: false,
+                      speed: 300,
+                      startAngle: 180,
+                      text: 0 + '%',
+                      onDraw: function(el, circle){
+                         $(".circleChart_text", el).html(msg.text);
+                      }
+                   });
+                }
+                if (5 == msg.category){
+                    document.getElementById('up').text = msg.up + ' Kb';
+                    document.getElementById('upT').text = msg.TotalSnd;
+                    document.getElementById('downT').text = msg.TotalRcv;
+                    document.getElementById('down').text = msg.down + ' Kb';
+                    netchart.updateSeries([{
+                    data: [...netchart.w.config.series[0].data,
+                      [
+                        msg.time,
+                        msg.up
+                      ]
+                    ]
+                    }, {
+                    data: [...netchart.w.config.series[1].data,
+                      [
+                        msg.time,
+                        msg.down
+                      ]
+                    ]
+                    }])
+                }
+                if (6 == msg.category){
+                    document.getElementById('read').text = msg.read + ' Kb';
+                    document.getElementById('readT').text = msg.totalRead;
+                    document.getElementById('writeT').text = msg.totalWrite;
+                    document.getElementById('write').text = msg.write + ' Kb';
+                    iochart.updateSeries([{
+                    data: [...iochart.w.config.series[0].data,
+                      [
+                        msg.time,
+                        msg.read
+                      ]
+                    ]
+                    }, {
+                    data: [...iochart.w.config.series[1].data,
+                      [
+                        msg.time,
+                        msg.write
+                      ]
+                    ]
+                    }])
+                }
+
+            });
+        });
+    </script>
+    {% endblock %}
+</body>
+</html>
