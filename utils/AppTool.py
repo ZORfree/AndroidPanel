@@ -215,6 +215,15 @@ class APPTool(object):
     #     diskList = re.sub(" +", " ", diskData).split(" ")
     #     totalRom = float(diskList[1])
     #     usedRom = float(diskList[2])
+    def formatDiskData(self,diskData):
+        if "M" in diskData:
+            diskValue = float(diskData[:-1])
+            return self.div(diskValue, 1024, 2)
+        elif "G" in diskData:
+            return float(diskData[:-1])
+        else:
+            diskValue = float(diskData[:-1])
+            return self.div(diskValue, 1024 * 1024, 2)
 
     def getDiskData(self):
         diskData = [i for i in self._adb.RunShellCommand(
@@ -222,22 +231,9 @@ class APPTool(object):
         if not diskData:
             return None, None
         diskList = re.sub(" +", " ", diskData).split(" ")
-        if "M" not in diskList[1] and "G" not in diskList[1]:
-            totalRom = float(diskList[1])
-            usedRom = float(diskList[2])
-            freeRom = float(diskList[3])
-            totalRom = self.div(totalRom, 1024*1024, 2)
-            usedRom = self.div(usedRom, 1024*1024, 2)
-            freeRom = self.div(freeRom, 1024*1024, 2)
-        else:
-            totalRom = float(diskList[1][:-1])
-            usedRom = float(diskList[2][:-1])
-            freeRom = float(diskList[3][:-1])
-            if "M" in diskList[1]:
-                print  'mei you m'
-                totalRom = self.div(totalRom, 1024, 2)
-                usedRom = self.div(usedRom, 1024, 2)
-                freeRom = self.div(freeRom, 1024, 2)
+        totalRom = self.formatDiskData(diskList[1])
+        usedRom = self.formatDiskData(diskList[2])
+        freeRom = self.formatDiskData(diskList[3])
         romUsage = self.div(usedRom * 100, totalRom, 0)
         return totalRom, usedRom, freeRom, romUsage
 
