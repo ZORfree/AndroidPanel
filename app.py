@@ -1,180 +1,202 @@
-# coding=utf-8
-from flask import Flask, url_for,render_template
+# -*- coding: utf-8 -*-
+from flask import Flask, url_for, render_template, request
 from flask_socketio import send, emit,SocketIO,SocketIOTestClient
+from sqlitedict import SqliteDict
 import time
-import datetime
+from datetime import datetime
+from utils.ProcessThread import ProThread
 from utils.Commands import AndroidCommands
 from utils.AppTool import APPTool
-from utils.deviceUtils import devUtils
+from utils.DeviceUtils import devUtils
+from utils.ProcessUtils import proUtils
+from utils.Thread import Thread
 import os
 import re
-
+from utils.Script import SCRIPT
 import sys
-reload(sys)
-sys.setdefaultencoding('utf8')
 from threading import Lock
 
 async_mode = None
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
-socketio = SocketIO(app, async_mode=async_mode)
-threadCPU ,threadRAM , threadFPS, threadDISK, threadIO, threadNET= None ,None, None, None, None, None
+socketio = SocketIO(app, async_mode=async_mode,ping_interval=2,ping_timeout=5)
 
 # thread_lock = Lock()
 deviceName = os.popen('adb devices').readlines()[1].split()[0]
 adb = AndroidCommands(deviceName)
 device = APPTool(adb)
 devUtil = devUtils(device)
-retryTimes = 6
-# 后台线程 产生数据，即刻推送至前端
-def CPU_thread():
-    count = retryTimes
-    while adb.enabled:
-        cpuUsage = devUtil.cpuUsage()
-        if cpuUsage:
-            socketio.emit('server_response',{ 'category':1,'data': '%.2f' %cpuUsage},
-                          namespace='/showPage')
-            socketio.sleep(1)
-        else:
-            if count < 0:
-                print 'CPU_thread exit'
-                break
-            count -= 1
-def RAM_thread():
-    count = retryTimes
-    while adb.enabled:
-        MemTotal, Memfree, MemUsage = devUtil.ramUsage()
-        if MemUsage:
-            socketio.emit('server_response',{ 'category':2,'total': MemTotal,'free':Memfree,'usage':MemUsage},
-                          namespace='/showPage')
-            socketio.sleep(1)
-        else:
-            if count < 0:
-                print 'RAM_thread exit'
-                break
-            count -= 1
-def FPS_thread():
-    while adb.enabled:
-        fps_List = []
-        for i in range(15):
-            try:
-                fps = devUtil.FPSData()
-            except Exception as e:
-                print e
-                continue
-            if fps:
-                fps_List.append(fps)
-        if fps_List:
-            FPS = devUtil._device.div(sum(fps_List), len(fps_List),1)
-            cent = devUtil._device.div(FPS,60,2) * 100
-            socketio.emit('server_response',{ 'category':3,'value':FPS, 'cent':cent},
-                          namespace='/showPage')
-def DISK_thread():
-    count = retryTimes
-    while adb.enabled:
-        totalRom, usedRom, freeRom, romUsage = devUtil.diskUsage()
-        # romUsage = devUtil.diskUsage()
-        if romUsage:
-            socketio.emit('server_response',{ 'category':4,'text': str(usedRom)+"/"+str(totalRom)+'G','value':romUsage},
-                          namespace='/showPage')
-            # socketio.emit('server_response',{'category': 4, 'value': romUsage})
-            socketio.sleep(5)
-        else:
-            if count < 0:
-                print 'DISK_thread exit'
-                break
-            count -= 1
-def IO_thread():
-    count = retryTimes
-    while adb.enabled:
-        readSpeed, writeSpeed, totalReadKb, totalWriteKb = devUtil.ioSpeed()
-        socketio.sleep(1)
-        if readSpeed or writeSpeed or totalReadKb or totalWriteKb:
-            if totalReadKb > 1000 * 1000:
-                totalReadKb = "%.2f GB" % devUtil._device.div(totalReadKb, 1024 * 1024, 2)
-            elif totalReadKb > 1000:
-                totalReadKb ="%.2f MB" %  devUtil._device.div(totalReadKb, 1024, 2)
-            else:
-                totalReadKb = '%d KB' % totalReadKb
-            if totalWriteKb > 1000 * 1000:
-                totalWriteKb = "%.2f GB" % devUtil._device.div(totalWriteKb, 1024 * 1024, 2)
-            elif totalWriteKb > 1000:
-                totalWriteKb ="%.2f MB" %  devUtil._device.div(totalWriteKb, 1024, 2)
-            else:
-                totalWriteKb = '%d KB' % totalWriteKb
-            socketio.emit('server_response',{ 'category':6, 'totalRead':totalReadKb, 'totalWrite':totalWriteKb, 'read': readSpeed,'write': writeSpeed,'time': int(round(time.time() * 1000))},
-                          namespace='/showPage')
-        else:
-            if count < 0:
-                print 'IO_thread exit'
-                break
-            count -= 1
-def NET_thread():
-    count = retryTimes
-    while adb.enabled:
-        try:
-            uploadSpeed, downloadSpeed, TotalRcv, TotalSnd = devUtil.netSpeed()
-        except Exception as e:
-            print e
-            continue
-        socketio.sleep(1)
-        if uploadSpeed or downloadSpeed or TotalRcv or TotalSnd:
-            if TotalRcv > 1000 * 1000 * 1000:
-                TotalRcv ="%.2f GB" %  devUtil._device.div(TotalRcv, 1024 * 1024 * 1024, 2)
-            elif TotalRcv > 1000 * 1000:
-                TotalRcv = "%.2f MB" % devUtil._device.div(TotalRcv, 1024 * 1024, 2)
-            elif TotalRcv > 1000:
-                TotalRcv ="%.2f KB" %  devUtil._device.div(TotalRcv, 1024, 2)
-            else:
-                TotalRcv = '%d B' % TotalRcv
-            if TotalSnd > 1000 * 1000 * 1000:
-                TotalSnd ="%.2f GB" %  devUtil._device.div(TotalSnd, 1024 * 1024 * 1024, 2)
-            elif TotalSnd > 1000 * 1000:
-                TotalSnd = "%.2f MB" % devUtil._device.div(TotalSnd, 1024 * 1024, 2)
-            elif TotalSnd > 1000:
-                TotalSnd ="%.2f KB" %  devUtil._device.div(TotalSnd, 1024, 2)
-            else:
-                TotalSnd = '%d B' % TotalSnd
-            socketio.emit('server_response',{ 'category':5, 'TotalRcv':TotalRcv, 'TotalSnd':TotalSnd, 'down': downloadSpeed,'up': uploadSpeed,'time': int(round(time.time() * 1000))},
-                          namespace='/showPage')
-        else:
-            if count < 0:
-                print 'NET_thread exit'
-                break
-            count -= 1
-showPage = False
-ProcessesPage = False
+proUtil = proUtils(device)
+totalThread = Thread(adb,devUtil,socketio)
+proThread = ProThread(adb,proUtil,socketio)
+script = SCRIPT(adb)
+from utils.ProcessSchedu import ProSchedu
+from utils.Schedu import Schedu
+
+
+proUtil.setPackageName('com.iflytek.xiri')
+proSchedu = ProSchedu(adb, proUtil, socketio)
+schedu = Schedu(adb, devUtil, socketio)
+threadCPU ,threadRAM , threadFPS, threadDISK, threadIO, threadNET = None ,None, None, None, None, None
+proThreadCPU, proThreadRAM, proThreadIO, proThreadNET = None, None, None, None
+
+def refreshPage():
+    if adb.showPage:
+        if proSchedu.state() == 1:
+            proSchedu.pause()
+            print("暂停进程任务")
+    elif adb.proPage:
+        if schedu.state() == 1:
+            schedu.pause()
+            print("暂停整机任务")
+    elif adb.scriptPage:
+        if proSchedu.state() == 1:
+            proSchedu.pause()
+            print("暂停进程任务")
+        if schedu.state() == 1:
+            schedu.pause()
+            print("暂停整机任务")
+
 
 @app.route('/')
 def Dashboard():
-    showPage = True
-    ProcessesPage = False
+    adb.showPage = True
+    adb.proPage = False
+    adb.scriptPage = False
+    refreshPage()
     devInfoList = devUtil.devInfo()
-    return render_template("index.html", async_mode=socketio.async_mode,page="Dashboard",hostname="B860AV1.1-T",running="22小时20分钟",devInfo = devInfoList)
+    return render_template("index.html", async_mode=socketio.async_mode,devInfo = devInfoList)
 
 @app.route('/Processes')
 def Processes():
-    showPage = False
-    ProcessesPage = True
-    return render_template("index.html", page="Processes",hostname="B860AV1.1-T",running="22小时20分钟")
+    adb.showPage = False
+    adb.proPage = True
+    adb.scriptPage = False
+    refreshPage()
+    return render_template("process.html", async_mode=socketio.async_mode)
+
+@app.route('/Script')
+def Script():
+    adb.showPage = False
+    adb.proPage = False
+    adb.scriptPage = True
+    refreshPage()
+    with SqliteDict('./data.db') as mydict:
+        scriptData = mydict.get('script')
+        print(scriptData)
+    return render_template("scriptproject.html",data=scriptData)
+
+@app.route('/SaveScript',methods=['POST'])
+def Save():
+    for i in request.form:
+        dataList = eval(i)
+        break
+    typeFunMap = {"2":[script.H5,15],"3":[script.Live,15],"4":[script.Vod,6],"5":[script.Playback,5],"6":[script.Skill,6]}
+    scriptList = []
+    TIME  = int(time.time())
+    for i in dataList:
+        print(i)
+        invTime = int(i["time"])
+        if i["type"] == "1":
+            defaultScriptList = [
+                {"fun": script.Live, "inv": 15, "start_date": datetime.fromtimestamp(TIME),
+                 "end_date": datetime.fromtimestamp(TIME + invTime * 60)},
+                {"fun": script.Keydown,"run_date": datetime.fromtimestamp(TIME + invTime * 60 + 10),"arg":[3]},
+                {"fun": script.Vod, "inv": 6, "start_date": datetime.fromtimestamp(TIME + invTime * 60 + 10 * 2),
+                 "end_date": datetime.fromtimestamp(TIME + invTime * 60 * 2 + 10 * 2)},
+                {"fun": script.Keydown,"run_date": datetime.fromtimestamp(TIME + invTime * 60 * 2 + 10 * 3),"arg":[3]},
+                {"fun": script.Playback, "inv": 6, "start_date": datetime.fromtimestamp(TIME + invTime * 60 * 2 + 10 * 4),
+                 "end_date": datetime.fromtimestamp(TIME + invTime * 60 * 3 + 10 * 4)},
+                {"fun": script.Keydown,"run_date": datetime.fromtimestamp(TIME + invTime * 60 * 3 + 10 * 5),"arg":[3]},
+                {"fun": script.Skill, "inv": 6, "start_date": datetime.fromtimestamp(TIME + invTime * 60 * 3 + 10 * 6),
+                 "end_date": datetime.fromtimestamp(TIME + invTime * 60 * 4 + 10 * 6)},
+                {"fun": script.Keydown,"run_date": datetime.fromtimestamp(TIME + invTime * 60 * 4 + 10 * 7),"arg":[3]}
+            ]
+            TIME = TIME + invTime * 60 * 4 + 10 * 8
+            scriptList.extend(defaultScriptList)
+        else:
+            scriptdict = {}
+            scriptdict["fun"] = typeFunMap[i["type"]][0]
+            scriptdict["inv"] = typeFunMap[i["type"]][1]
+            scriptdict["start_date"] = datetime.fromtimestamp(TIME)
+            scriptdict["end_date"] = datetime.fromtimestamp(TIME + invTime * 60)
+            scriptList.append(scriptdict)
+            scriptList.append({"fun": script.Keydown,"run_date": datetime.fromtimestamp(TIME + invTime * 60 + 10),"arg":[3]})
+            TIME = TIME + invTime* 60 + 10 * 2
+    # scriptList.append({"fun": script.shutdown,"run_date": datetime.fromtimestamp(TIME + 5),"arg":[]})
+    if script.state():
+        print(script.state())
+        script.removejobs()
+        script.Add_Job(scriptList)
+    else:
+        if scriptList != None:
+            script.Add_Job(scriptList)
+            script.Start()
+    with SqliteDict('./data.db') as mydict:
+        mydict['script'] = dataList
+        mydict.commit()
+    return 'success'
 
 
+@socketio.on('disconnect', namespace='/showPage')
+def showPage_disconnect():
+    print("showPage 断开")
+
+@socketio.on('disconnect', namespace='/proPage')
+def showPage_disconnect():
+    print("proPage 断开")
+
+# @socketio.on('connect',namespace="/showPage")
+# def connected_msg():
+#     print ('Already Connect')
+#     global threadCPU, threadRAM, threadFPS, threadDISK, threadIO, threadNET
+#     print(threadCPU, threadRAM, threadFPS, threadDISK, threadIO, threadNET)
+#     if threadCPU is None:
+#         threadCPU = socketio.start_background_task(target=totalThread.CPU_thread)
+#     if threadRAM is None:
+#         threadRAM = socketio.start_background_task(target=totalThread.RAM_thread)
+#     if threadFPS is None:
+#         threadFPS = socketio.start_background_task(target=totalThread.FPS_thread)
+#     if threadDISK is None:
+#         threadDISK = socketio.start_background_task(target=totalThread.DISK_thread)
+#     if threadIO is None:
+#         threadIO = socketio.start_background_task(target=totalThread.IO_thread)
+#     if threadNET is None:
+#         threadNET = socketio.start_background_task(target=totalThread.NET_thread)
 
 @socketio.on('connect',namespace="/showPage")
 def connected_msg():
-    global threadCPU, threadRAM, threadFPS, threadDISK, threadIO, threadNET
-    if threadCPU is None:
-        threadCPU = socketio.start_background_task(target=CPU_thread)
-    if threadRAM is None:
-        threadRAM = socketio.start_background_task(target=RAM_thread)
-    if threadFPS is None:
-        threadFPS = socketio.start_background_task(target=FPS_thread)
-    if threadDISK is None:
-        threadDISK = socketio.start_background_task(target=DISK_thread)
-    if threadIO is None:
-        threadIO = socketio.start_background_task(target=IO_thread)
-    if threadNET is None:
-        threadNET = socketio.start_background_task(target=NET_thread)
+    print ('Already Connect')
+    scheduState = schedu.state()
+    if scheduState == 0:
+        schedu.Start()
+    elif scheduState == 2:
+        schedu.resume()
+    print(schedu.state())
+
+@socketio.on('connect',namespace="/proPage")
+def connected_msg_pro():
+    print('Process Connect')
+    proScheduState = proSchedu.state()
+    if proScheduState == 0:
+        proSchedu.Start()
+    elif proScheduState == 2:
+        proSchedu.resume()
+    print(proSchedu.state())
+
+# @socketio.on('connect',namespace="/proPage")
+# def connected_msg_pro():
+#     print ('Process Connect')
+#     proUtil.setPackageName('com.iflytek.xiri')
+#     global proThreadCPU, proThreadRAM, proThreadIO, proThreadNET
+#     if proThreadCPU is None:
+#         proThreadCPU = socketio.start_background_task(target=proThread.CPU_thread)
+#     if proThreadRAM is None:
+#         proThreadRAM = socketio.start_background_task(target=proThread.RAM_thread)
+#     if proThreadIO is None:
+#         proThreadIO = socketio.start_background_task(target=proThread.IO_thread)
+#     if proThreadNET is None:
+#         proThreadNET = socketio.start_background_task(target=proThread.NET_thread)
 
 
 if __name__ == '__main__':

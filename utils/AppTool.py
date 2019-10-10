@@ -1,6 +1,6 @@
 # -*- coding:utf-8 -*-
 
-from Commands import AndroidCommands
+from utils.Commands import AndroidCommands
 import os
 import re
 import time
@@ -15,13 +15,15 @@ class APPTool(object):
         self.number = "0123456789"
         self.pCpu = 0.00
         self.pTotalTime = 0.00
+        self.pTotalTimePro = 0.00
         self.pProCpu = 0.00
 
 #------------------------------------------------------comman part------------------------------------------------------
 
-    def initPID(self):
+    def initPID(self,packagename):
         psList = [re.sub(" +", " ", i).split(" ")
-                  for i in self._adb.RunShellCommand("ps")[1:] if i != ""]
+                  for i in self._adb.RunShellCommand("ps | findstr %s" % packagename) if i != ""]
+        # print("psList:%s"%psList)
         global package_pid_Dict
         package_pid_Dict = {}
         for i in psList:
@@ -57,41 +59,43 @@ class APPTool(object):
             int(proCpuList[15]) + int(proCpuList[16])
         return float(procpu)
 
-    def getTotalCpuData(self):
-        cpu, totalTime = 0, 0
+    def getTotalTime(self):
+        totalTime = 0
         TotalCpuList = re.sub(
             " +", " ", self._adb.RunShellCommand("cat /proc/stat")[0]).split(" ")[1:]
-        # TotalCpuList.pop(3)
         for i in TotalCpuList:
             totalTime += int(i)
-        cpu = totalTime - int(TotalCpuList[3])
-        return(float(cpu), float(totalTime))
+        return  (totalTime, int(TotalCpuList[3]))
 
-    # getProcessCpuData("com.iflytek.xiri")
-    # getTotalCpuData()
-
-    def getCpuUsage(self, mpid=None):
-        # global pCpu, pTotalTime, pProCpu
-        timev = 0
-        cpu, totalTime = self.getTotalCpuData()
+    def getTotalCpuUsage(self):
+        cpu = 0
+        totalTime,freetime = self.getTotalTime()
+        cpu = totalTime - freetime
         timev = totalTime - self.pTotalTime
-        usage = self.div((100.00 * (cpu - self.pCpu)), timev, 2)
-        if usage < 0:
-            usage = 0.0
-        elif usage > 100:
-            usage = 100
+        cpuusage = self.div(((cpu - self.pCpu) * 100.00), timev, 2)
+        if cpuusage < 0:
+            cpuusage = 0.0
+        elif cpuusage > 100:
+            cpuusage = 100
         self.pCpu = cpu
         self.pTotalTime = totalTime
-        if mpid:
-            newprocpu = self.getProcessCpuData(mpid)
-            prousage = self.div(((newprocpu - self.pProCpu) * 100.00), timev, 2)
-            if prousage < 0:
-                prousage = 0.0
-            elif prousage > 100:
-                prousage = 100
-            self.pProCpu = newprocpu
-            return usage, prousage
-        return usage
+        return cpuusage
+
+
+    def getProcessCpuUsage(self, mpid=None):
+        if mpid is None:
+            return None
+        totalTime, freetime = self.getTotalTime()
+        timev = totalTime - self.pTotalTimePro
+        newprocpu = self.getProcessCpuData(mpid)
+        prousage = self.div(((newprocpu - self.pProCpu) * 100.00), timev, 2)
+        if prousage < 0:
+            prousage = 0.0
+        elif prousage > 100:
+            prousage = 100
+        self.pProCpu = newprocpu
+        self.pTotalTimePro = totalTime
+        return  prousage
 
 
 #------------------------------------------------------RAM part------------------------------------------------------
@@ -113,7 +117,6 @@ class APPTool(object):
         return MemTotal, Memfree, MemUsage
 
     def getProcessRamData(self, mpid):
-        # mpid = pidInfo(packagename)
         proMem = None
         proRamList = self._adb.RunShellCommand(
             "dumpsys meminfo %s |findstr TOTAL" % mpid)
@@ -158,9 +161,12 @@ class APPTool(object):
                         TotalNetDict[i[3]] = []
                     TotalNetDict[i[3]].append([i[5], i[7]])
             if muid:
-                for i in TotalNetDict[muid]:
-                    TotalRcv += float(i[0])
-                    TotalSnd += float(i[1])
+                if muid in TotalNetDict:
+                    for i in TotalNetDict[muid]:
+                        TotalRcv += float(i[0])
+                        TotalSnd += float(i[1])
+                else:
+                    return None, None
             else:
                 for v in TotalNetDict.values():
                     for i in v:
@@ -168,6 +174,7 @@ class APPTool(object):
                         TotalSnd += float(i[1])
             return TotalRcv, TotalSnd
         except Exception as e:
+            print(e)
             return None, None
 
     # print(getTotalNetBytes("10255"))
@@ -222,15 +229,17 @@ class APPTool(object):
         elif "G" in diskData:
             return float(diskData[:-1])
         else:
-            diskValue = float(diskData[:-1])
+            diskValue = float(diskData)
             return self.div(diskValue, 1024 * 1024, 2)
 
     def getDiskData(self):
         diskData = [i for i in self._adb.RunShellCommand(
             "df /mnt/sdcard/") if i != ""][1]
         if not diskData:
-            return None, None
+            return None, None, None, None
         diskList = re.sub(" +", " ", diskData).split(" ")
+        if len(diskList) < 4:
+            return None, None, None, None
         totalRom = self.formatDiskData(diskList[1])
         usedRom = self.formatDiskData(diskList[2])
         freeRom = self.formatDiskData(diskList[3])
@@ -280,7 +289,7 @@ class APPTool(object):
                 continue
             for j in devInfoCmd:
                 if j in buildProp[0]:
-                    if devInfo.has_key(j):
+                    if j in devInfo:
                         continue
                     devInfo[j] = buildProp[1]
         return devInfo

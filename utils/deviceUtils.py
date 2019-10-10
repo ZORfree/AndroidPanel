@@ -1,8 +1,8 @@
 # -*- coding:utf-8 -*-
 
-from Commands import AndroidCommands
+from utils.Commands import AndroidCommands
 import time
-from AppTool import APPTool
+from utils.AppTool import APPTool
 
 
 class devUtils(object):
@@ -52,7 +52,7 @@ class devUtils(object):
     #     return [Manufacturer, androidVersion, cpuInfo, gpuInfo, buildDate]
 
     def cpuUsage(self):
-        return self._device.getCpuUsage()
+        return self._device.getTotalCpuUsage()
 
     def diskUsage(self):
         return self._device.getDiskData()
@@ -66,6 +66,8 @@ class devUtils(object):
         timev = newtime - self.pNettime
         self.pNettime = newtime
         rcv, snd = self._device.getNetBytes()
+        if rcv is None:
+            return None,None,None,None
         TotalRcv = rcv - self.No1Rcv
         TotalSnd = snd - self.No1Snd
         rxBytes = rcv - self.pRcv

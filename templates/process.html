@@ -1,48 +1,48 @@
 {% extends 'base.html' %}
 
 {% block content %}
-	<div class="content">
-        <ul class="home-container">
-            <li class="dev-info" style="background-color: #DFF0D8;">
-                <div class="dev-info-header" style="border-bottom: 1px solid #fbfbfb;height: 30px;line-height: 30px;">
-                    <span>设备概览</span>
+    <div class="content">
+        <ul class="home-container" style="margin-bottom: 0">
+            <li style="width: 50%;">
+                <div class="charts-header">
+                    <span>CPU</span>
+                    <ul>
+                        <li style="width: 50%;">
+                            <p><span class="icobox"  style="background-color: #0485D6;"></span>平均值</p>
+                            <a id='CPUAverage'>load..</a>
+                        </li>
+                        <li style="width: 50%;">
+                            <p><span class="icobox" style="background-color: #ED1B24;"></span>峰值</p>
+                            <a id='CPUMax'>load..</a>
+                        </li>
+                    </ul>
                 </div>
-                <div style="margin-left: 25px;margin-top: 10px;margin-bottom: 10px">
-                    <span >厂商: {{ devInfo[0] }}</span><br>
-                    <span>设备: {{ devInfo[1] }}</span><br>
-                    <!--<span>分辨率:1280x720</span><br>-->
-                    <span>CPU信息: {{ devInfo[2] }}</span><br>
-                    <span>GPU信息: {{ devInfo[3] }}</span><br>
-                    <span>构建日期: {{ devInfo[4] }}</span><br>
+                <div id="cpu-chart" class="charts-style">
+
                 </div>
-                
             </li>
-            <li class="dev-info">
-                <div class="dev-info-header">
-                    <span>CPU使用率</span>
+            <li style="width: 50%;">
+                <div class="charts-header">
+                    <span>PSS</span>
+                    <ul>
+                        <li style="width: 50%;">
+                            <p><span class="icobox" style="background-color: #0485D6;"></span>平均值</p>
+                            <a id='PSSAverage'>load..</a>
+                        </li>
+                        <li style="width: 50%;">
+                            <p><span class="icobox" style="background-color: #ED1B24;"></span>峰值</p>
+                            <a id='PSSMax'>load..</a>
+                        </li>
+                    </ul>
                 </div>
-                <div class="CPUChart"></div>   
-            </li>
-            <li class="dev-info">
-                <div class="dev-info-header">
-                    <span>RAM使用率</span>
+                <div id="pss-chart" class="charts-style">
+
                 </div>
-                <div class="RAMChart"></div>   
+
             </li>
-            <li class="dev-info">
-                <div class="dev-info-header">
-                    <span>FPS帧数</span>
-                </div>
-                <div class="FPSChart"></div>   
-            </li>
-            <li class="dev-info">
-                <div class="dev-info-header">
-                    <span>DISK使用率</span>
-                </div>
-                <div class="DISKChart"></div>   
-            </li>
+
         </ul>
-	</div>
+    </div>
 
     <div class="content">
         <ul class="home-container" style="margin-bottom: 0">
@@ -69,7 +69,7 @@
                     </ul>
                 </div>
                 <div id="net-chart" class="charts-style">
-                    
+
                 </div>
             </li>
             <li style="width: 50%;">
@@ -95,9 +95,9 @@
                     </ul>
                 </div>
                 <div id="io-chart" class="charts-style">
-                    
+
                 </div>
-                
+
             </li>
 
         </ul>
@@ -106,8 +106,7 @@
 
 {% block scripts %}
     {{ super() }}
-    <script src="../static/js/circleChart.min.js"></script>
+    <script src="../static/js/procharts.js"></script>
     <script src="../static/js/apcharts.js"></script>
-    <script src="../static/js/apcirc.js"></script>
-    <script src="../static/js/index.js"></script>
+    <script src="../static/js/process.js"></script>
 {% endblock %}
