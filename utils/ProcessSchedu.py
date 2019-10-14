@@ -52,8 +52,10 @@ class ProSchedu(object):
 
     def resume(self):
         print("resume")
-        scheduler.resume()
-
+        try:
+            scheduler.resume()
+        except Exception as e:
+            print(e)
     def CPU_thread(self):
         if self.adb.enabled:
             proCpuUsage =  self.proUtil.proCpuUsage()

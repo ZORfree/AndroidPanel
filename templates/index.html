@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 
+
 {% block content %}
 	<div class="content">
         <ul class="home-container">
@@ -15,31 +16,31 @@
                     <span>GPU信息: {{ devInfo[3] }}</span><br>
                     <span>构建日期: {{ devInfo[4] }}</span><br>
                 </div>
-                
+
             </li>
             <li class="dev-info">
                 <div class="dev-info-header">
                     <span>CPU使用率</span>
                 </div>
-                <div class="CPUChart"></div>   
+                <div class="CPUChart"></div>
             </li>
             <li class="dev-info">
                 <div class="dev-info-header">
                     <span>RAM使用率</span>
                 </div>
-                <div class="RAMChart"></div>   
+                <div class="RAMChart"></div>
             </li>
             <li class="dev-info">
                 <div class="dev-info-header">
                     <span>FPS帧数</span>
                 </div>
-                <div class="FPSChart"></div>   
+                <div class="FPSChart"></div>
             </li>
             <li class="dev-info">
                 <div class="dev-info-header">
                     <span>DISK使用率</span>
                 </div>
-                <div class="DISKChart"></div>   
+                <div class="DISKChart"></div>
             </li>
         </ul>
 	</div>
@@ -69,7 +70,7 @@
                     </ul>
                 </div>
                 <div id="net-chart" class="charts-style">
-                    
+
                 </div>
             </li>
             <li style="width: 50%;">
@@ -95,9 +96,9 @@
                     </ul>
                 </div>
                 <div id="io-chart" class="charts-style">
-                    
+
                 </div>
-                
+
             </li>
 
         </ul>

@@ -108,7 +108,9 @@ class SCRIPT(object):
         scheduler.pause()
     def resume(self):
         print("resume")
-        scheduler.resume()
-
+        try:
+            scheduler.resume()
+        except Exception as e:
+            print(e)
 
  

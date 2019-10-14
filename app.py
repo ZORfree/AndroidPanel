@@ -1,61 +1,34 @@
 # -*- coding: utf-8 -*-
 from flask import Flask, url_for, render_template, request
-from flask_socketio import send, emit,SocketIO,SocketIOTestClient
+from flask_socketio import send, emit,SocketIO
 from sqlitedict import SqliteDict
-import time
+import time ,os
 from datetime import datetime
-from utils.ProcessThread import ProThread
 from utils.Commands import AndroidCommands
 from utils.AppTool import APPTool
 from utils.DeviceUtils import devUtils
 from utils.ProcessUtils import proUtils
-from utils.Thread import Thread
-import os
-import re
 from utils.Script import SCRIPT
-import sys
-from threading import Lock
+from utils.ProcessSchedu import ProSchedu
+from utils.Schedu import Schedu
 
 async_mode = None
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app, async_mode=async_mode,ping_interval=2,ping_timeout=5)
 
-# thread_lock = Lock()
 deviceName = os.popen('adb devices').readlines()[1].split()[0]
 adb = AndroidCommands(deviceName)
 device = APPTool(adb)
 devUtil = devUtils(device)
 proUtil = proUtils(device)
-totalThread = Thread(adb,devUtil,socketio)
-proThread = ProThread(adb,proUtil,socketio)
 script = SCRIPT(adb)
-from utils.ProcessSchedu import ProSchedu
-from utils.Schedu import Schedu
-
 
 proUtil.setPackageName('com.iflytek.xiri')
 proSchedu = ProSchedu(adb, proUtil, socketio)
 schedu = Schedu(adb, devUtil, socketio)
-threadCPU ,threadRAM , threadFPS, threadDISK, threadIO, threadNET = None ,None, None, None, None, None
-proThreadCPU, proThreadRAM, proThreadIO, proThreadNET = None, None, None, None
 
-def refreshPage():
-    if adb.showPage:
-        if proSchedu.state() == 1:
-            proSchedu.pause()
-            print("暂停进程任务")
-    elif adb.proPage:
-        if schedu.state() == 1:
-            schedu.pause()
-            print("暂停整机任务")
-    elif adb.scriptPage:
-        if proSchedu.state() == 1:
-            proSchedu.pause()
-            print("暂停进程任务")
-        if schedu.state() == 1:
-            schedu.pause()
-            print("暂停整机任务")
+
 
 
 @app.route('/')
@@ -85,6 +58,43 @@ def Script():
         scriptData = mydict.get('script')
         print(scriptData)
     return render_template("scriptproject.html",data=scriptData)
+
+@app.route('/getSwitch')
+def getSwitch():
+    if adb.showPage:
+        if schedu.state():
+            return {"code":True}
+        return  {"code":False}
+    elif adb.proPage:
+        if proSchedu.state():
+            return {"code": True}
+        return {"code": False}
+    else:
+        if script.state():
+            return {"code": True}
+        return {"code": False}
+
+@app.route('/Switch/<int:switch>')
+def Switch(switch):
+    if adb.showPage:
+        if switch:
+            if schedu.state():
+                schedu.pause()
+        else:
+            schedu.resume()
+    elif adb.proPage:
+        if switch:
+            if proSchedu.state():
+                proSchedu.pause()
+        else:
+            proSchedu.resume()
+    else:
+        if switch:
+            if script.state():
+                script.pause()
+        else:
+            script.resume()
+    return {"code":True},200
 
 @app.route('/SaveScript',methods=['POST'])
 def Save():
@@ -135,7 +145,7 @@ def Save():
     with SqliteDict('./data.db') as mydict:
         mydict['script'] = dataList
         mydict.commit()
-    return 'success'
+        return 'success'
 
 
 @socketio.on('disconnect', namespace='/showPage')
@@ -146,23 +156,6 @@ def showPage_disconnect():
 def showPage_disconnect():
     print("proPage 断开")
 
-# @socketio.on('connect',namespace="/showPage")
-# def connected_msg():
-#     print ('Already Connect')
-#     global threadCPU, threadRAM, threadFPS, threadDISK, threadIO, threadNET
-#     print(threadCPU, threadRAM, threadFPS, threadDISK, threadIO, threadNET)
-#     if threadCPU is None:
-#         threadCPU = socketio.start_background_task(target=totalThread.CPU_thread)
-#     if threadRAM is None:
-#         threadRAM = socketio.start_background_task(target=totalThread.RAM_thread)
-#     if threadFPS is None:
-#         threadFPS = socketio.start_background_task(target=totalThread.FPS_thread)
-#     if threadDISK is None:
-#         threadDISK = socketio.start_background_task(target=totalThread.DISK_thread)
-#     if threadIO is None:
-#         threadIO = socketio.start_background_task(target=totalThread.IO_thread)
-#     if threadNET is None:
-#         threadNET = socketio.start_background_task(target=totalThread.NET_thread)
 
 @socketio.on('connect',namespace="/showPage")
 def connected_msg():
@@ -184,20 +177,22 @@ def connected_msg_pro():
         proSchedu.resume()
     print(proSchedu.state())
 
-# @socketio.on('connect',namespace="/proPage")
-# def connected_msg_pro():
-#     print ('Process Connect')
-#     proUtil.setPackageName('com.iflytek.xiri')
-#     global proThreadCPU, proThreadRAM, proThreadIO, proThreadNET
-#     if proThreadCPU is None:
-#         proThreadCPU = socketio.start_background_task(target=proThread.CPU_thread)
-#     if proThreadRAM is None:
-#         proThreadRAM = socketio.start_background_task(target=proThread.RAM_thread)
-#     if proThreadIO is None:
-#         proThreadIO = socketio.start_background_task(target=proThread.IO_thread)
-#     if proThreadNET is None:
-#         proThreadNET = socketio.start_background_task(target=proThread.NET_thread)
-
+def refreshPage():
+    if adb.showPage:
+        if proSchedu.state() == 1:
+            proSchedu.pause()
+            print("暂停进程任务")
+    elif adb.proPage:
+        if schedu.state() == 1:
+            schedu.pause()
+            print("暂停整机任务")
+    elif adb.scriptPage:
+        if proSchedu.state() == 1:
+            proSchedu.pause()
+            print("暂停进程任务")
+        if schedu.state() == 1:
+            schedu.pause()
+            print("暂停整机任务")
 
 if __name__ == '__main__':
 

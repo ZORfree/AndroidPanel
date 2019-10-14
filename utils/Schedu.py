@@ -57,7 +57,11 @@ class Schedu(object):
 
     def resume(self):
         print("resume")
-        scheduler.resume()
+        try:
+            scheduler.resume()
+        except Exception as e:
+            print(e)
+
 
 
     def CPU_thread(self):
