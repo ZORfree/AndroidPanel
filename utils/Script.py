@@ -97,6 +97,7 @@ class SCRIPT(object):
             i.remove()
             print("移除一个JOB：" + i.name)
     def state(self):
+        #未初始化0，进行中1，暂停2
         return scheduler.state
         # return scheduler.running
     def shutdown(self):

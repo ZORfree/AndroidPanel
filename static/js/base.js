@@ -16,11 +16,11 @@ function refreshSwitch() {
 refreshSwitch();
 $(function(){
     switchEvent("#switch",function(){
-        layer.msg('ª÷∏¥');
+        layer.msg('ÊÅ¢Â§ç');
         $.get("/Switch/0");
         refreshSwitch();
     },function(){
-        layer.msg('‘›Õ£');
+        layer.msg('ÊöÇÂÅú');
         $.get("/Switch/1");
         refreshSwitch();
     });

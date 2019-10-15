@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 from flask import Flask, url_for, render_template, request
 from flask_socketio import send, emit,SocketIO
 from sqlitedict import SqliteDict
@@ -62,15 +63,18 @@ def Script():
 @app.route('/getSwitch')
 def getSwitch():
     if adb.showPage:
-        if schedu.state():
+        print("getSwitch %d" % schedu.state())
+        if schedu.state() == 1:
             return {"code":True}
         return  {"code":False}
     elif adb.proPage:
-        if proSchedu.state():
+        print("getSwitch %d" % proSchedu.state())
+        if proSchedu.state() == 1:
             return {"code": True}
         return {"code": False}
     else:
-        if script.state():
+        print("getSwitch %d" % script.state())
+        if script.state() == 1:
             return {"code": True}
         return {"code": False}
 
@@ -78,19 +82,19 @@ def getSwitch():
 def Switch(switch):
     if adb.showPage:
         if switch:
-            if schedu.state():
+            if schedu.state() == 1:
                 schedu.pause()
         else:
             schedu.resume()
     elif adb.proPage:
         if switch:
-            if proSchedu.state():
+            if proSchedu.state() == 1:
                 proSchedu.pause()
         else:
             proSchedu.resume()
     else:
         if switch:
-            if script.state():
+            if script.state() == 1:
                 script.pause()
         else:
             script.resume()
