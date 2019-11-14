@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/AndroidPanel.iml" filepath="$PROJECT_DIR$/.idea/AndroidPanel.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/androidpanel.iml" filepath="$PROJECT_DIR$/.idea/androidpanel.iml" />
     </modules>
   </component>
 </project>
