@@ -11,7 +11,13 @@
 '''
 
 
-from androidpanel.utils.OtherInfo import getPersonID
+from androidpanel.utils.OtherInfo import getPersonID,judgeRange
 
 
-print(getPersonID())
+# print(getPersonID())
+
+for i in [0.6647058823529413,
+0.8648,
+-0.2467741935483871,
+0.08423529411764706]:
+    print(judgeRange(i))

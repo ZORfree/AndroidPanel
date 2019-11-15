@@ -19,7 +19,7 @@ class ScriptConfig(db.Model):
     LAY_TABLE_INDEX = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.Text)
     tempId = db.Column(db.Integer)
-    time = db.Column(db.Integer)
+    time = db.Column(db.String(32))
     type = db.Column(db.String(32))
 
     def getconfig(self):
@@ -31,7 +31,12 @@ class ReportsConfig(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     reportID = db.Column(db.Integer)
     reportTime = db.Column(db.String(32))
-    reportsScore = db.Column(db.Integer)
+    reportScore = db.Column(db.Integer)
+    reportEvaluation =db.Column(db.PickleType)
+    CPUAverageScore = db.Column(db.Integer)
+    CPUMaxScore = db.Column(db.Integer)
+    PSSAverageScore = db.Column(db.Integer)
+    PSSMaxScore = db.Column(db.Integer)
     appVersion = db.Column(db.String(32))
     deviceModel = db.Column(db.String(68))
     measurementProgram = db.Column(db.String(68))
@@ -46,8 +51,10 @@ class ReportsConfig(db.Model):
     writeT = db.Column(db.Float)
 
     def getAllconfig(self):
-        return {"reportID":self.reportID,"reportTime":self.reportTime,"reportsScore":self.reportsScore,"appVersion":self.appVersion,"deviceModel":self.deviceModel
-                ,"measurementProgram":self.measurementProgram,"measurementPerson":self.measurementPerson,"CPUAverage":self.CPUAverage,"CPUMax":self.CPUMax
-                   ,"PSSAverage":self.PSSAverage,"PSSMax":self.PSSMax,"downT":self.downT,"upT":self.upT,"readT":self.readT,"writeT":self.writeT}
+        return {"reportID":self.reportID,"reportTime":self.reportTime,"reportScore":self.reportScore,"reportEvaluation":self.reportEvaluation,
+                "CPUAverageScore":self.CPUAverageScore,"CPUMaxScore":self.CPUMaxScore,"PSSAverageScore":self.PSSAverageScore,"PSSMaxScore":self.PSSMaxScore,
+                "appVersion":self.appVersion,"deviceModel":self.deviceModel,"measurementProgram":self.measurementProgram,"measurementPerson":self.measurementPerson,
+                "CPUAverage":self.CPUAverage,"CPUMax":self.CPUMax ,"PSSAverage":self.PSSAverage,"PSSMax":self.PSSMax,"downT":self.downT,"upT":self.upT,
+                "readT":self.readT,"writeT":self.writeT}
     def getSimpleconfig(self):
-        return {"reportID":self.reportID,"reportTime":self.reportTime,"reportsScore":self.reportsScore,"deviceModel":self.deviceModel}
+        return {"reportID":self.reportID,"reportTime":self.reportTime,"reportScore":self.reportScore,"deviceModel":self.deviceModel}

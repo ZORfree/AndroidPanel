@@ -14,7 +14,7 @@ import time,os
 from datetime import datetime
 from androidpanel.extensions import script,adb,devUtil,db,device
 from androidpanel.models import ScriptConfig, ReportsConfig
-from androidpanel.utils.OtherInfo import getPersonID
+from androidpanel.utils.OtherInfo import getPersonID,paramToNumber,calcScore
 main_bp = Blueprint('main', __name__)
 
 from androidpanel.extensions import socketio,proSchedu,schedu
@@ -129,12 +129,8 @@ def Upload():
     if not os.path.exists(reportPath):
         os.makedirs(reportPath)
     for fileName in request.files:
-        print(fileName)
         request.files[fileName].save(reportPath + fileName + ".jpg")
-    for i in request.form:
-        print(i,request.form[i].split(" ")[0])
 
-    reportsScore = 100
     deviceModel = ""
     devInfoList = devUtil.devInfo()
     if devInfoList[0]:
@@ -145,11 +141,13 @@ def Upload():
     PSSAverage = paramToNumber(request.form.get("PSSAverage"))
     PSSMax = paramToNumber(request.form.get("PSSMax"))
     CPUAverage = request.form.get("CPUAverage")
+    startTime = request.form.get("startTime")
+    print("开始时间为"+startTime)
     if CPUAverage:
-        CPUAverage = CPUAverage.split(" ")[0]
+        CPUAverage = float(CPUAverage.split(" ")[0])
     CPUMax = request.form.get("CPUMax")
     if CPUMax:
-        CPUMax = CPUMax.split(" ")[0]
+        CPUMax = float(CPUMax.split(" ")[0])
     upT = paramToNumber(request.form.get("upT"))
     readT = paramToNumber(request.form.get("readT"))
     writeT = paramToNumber(request.form.get("writeT"))
@@ -159,10 +157,16 @@ def Upload():
     measurementProgramList = getMeasurementProgram()
     if measurementProgramList:
         for i in measurementProgramList:
-            measurementProgram  = measurementProgram + typeToInfo(i["type"])[2] + typeToInfo(i["time"])[2]
+            measurementProgram  = measurementProgram + typeToInfo(i["type"])[2] + i["time"]
     session = db.session()
+    reportScore, reportEvaluation, CPUAverageScore, CPUMaxScore, PSSAverageScore, PSSMaxScore = calcScore(CPUAverage,CPUMax,PSSAverage,PSSMax,downT,upT,readT,writeT)
     reportsconfig =ReportsConfig(
-        reportsScore = reportsScore,
+        reportScore = reportScore,
+        reportEvaluation = reportEvaluation,
+        CPUAverageScore = CPUAverageScore,
+        CPUMaxScore = CPUMaxScore,
+        PSSAverageScore = PSSAverageScore,
+        PSSMaxScore = PSSMaxScore,
         appVersion = appVersion,
         deviceModel = deviceModel,
         measurementProgram = measurementProgram,
@@ -256,6 +260,8 @@ def refreshPage():
             schedu.pause()
             print("暂停整机任务")
 
+
+
 def getMeasurementProgram():
     scriptData = None
     if os.path.exists("data.db"):
@@ -267,18 +273,4 @@ def typeToInfo(type):
     typeFunMap = {"1":[script.H5,15,"H5、直、点、回、技能"],"2":[script.H5,15,"H5"],"3":[script.Live,15,"直播"],"4":[script.Vod,6,"点播"],"5":[script.Playback,5,"回看"],"6":[script.Skill,6,"技能"]}
     return typeFunMap[str(type)]
 
-def paramToNumber(param):
-    if param is None:
-        return None
-    paramStr, paramUnit = param.split(" ")
-    if paramUnit == "B":
-        paramNum = float(paramStr)
-    elif paramUnit == "KB":
-        paramNum = float(paramStr) * 1000
-    elif paramUnit == "MB":
-        paramNum = float(paramStr) * 1000 * 1000
-    elif paramUnit == "GB":
-        paramNum = float(paramStr) * 1000 * 1000 * 1000
-    else:
-        return None
-    return paramNum
+

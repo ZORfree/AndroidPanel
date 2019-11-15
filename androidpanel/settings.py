@@ -32,6 +32,24 @@ class BaseConfig:
     SECRET_KEY = os.getenv('SECRET_KEY', 'secret string')
     REPORT_UPLOAD_PATH = os.path.join(basedir, 'reports')
     SQLALCHEMY_TRACK_MODIFICATIONS = True
+    QA_SCORE = 70
+    QA_CPUAVERAGE = 17
+    QA_CPUMAX = 50
+    QA_PSSAVERAGE = 62000000
+    QA_PSSMAX = 85000000
+    QA_DOWNT = None
+    QA_UPT = None
+    QA_READT = None
+    QA_WRITET = None
+    CPUAVERAGE_PERCENT = 3.5
+    CPUMAX_PERCENT = 3.5
+    PSSAVERAGE_PERCENT = 35
+    PSSMAX_PERCENT = 14
+    DOWNT_PERCENT = 3.5
+    UPT_PERCENT = 03.5
+    READT_PERCENT = 3.5
+    WRITET_PERCENT = 3.5
+
 
 class DevelopmentConfig(BaseConfig):
     SQLALCHEMY_DATABASE_URI = \
