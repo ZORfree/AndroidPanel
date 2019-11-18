@@ -31,6 +31,7 @@ class ReportsConfig(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     reportID = db.Column(db.Integer)
     reportTime = db.Column(db.String(32))
+    spendTime = db.Column(db.String(32))
     reportScore = db.Column(db.Integer)
     reportEvaluation =db.Column(db.PickleType)
     CPUAverageScore = db.Column(db.Integer)
@@ -51,10 +52,10 @@ class ReportsConfig(db.Model):
     writeT = db.Column(db.Float)
 
     def getAllconfig(self):
-        return {"reportID":self.reportID,"reportTime":self.reportTime,"reportScore":self.reportScore,"reportEvaluation":self.reportEvaluation,
+        return {"reportID":self.reportID,"reportTime":self.reportTime,"spendTime":self.spendTime,"reportScore":self.reportScore,"reportEvaluation":self.reportEvaluation,
                 "CPUAverageScore":self.CPUAverageScore,"CPUMaxScore":self.CPUMaxScore,"PSSAverageScore":self.PSSAverageScore,"PSSMaxScore":self.PSSMaxScore,
                 "appVersion":self.appVersion,"deviceModel":self.deviceModel,"measurementProgram":self.measurementProgram,"measurementPerson":self.measurementPerson,
                 "CPUAverage":self.CPUAverage,"CPUMax":self.CPUMax ,"PSSAverage":self.PSSAverage,"PSSMax":self.PSSMax,"downT":self.downT,"upT":self.upT,
                 "readT":self.readT,"writeT":self.writeT}
     def getSimpleconfig(self):
-        return {"reportID":self.reportID,"reportTime":self.reportTime,"reportScore":self.reportScore,"deviceModel":self.deviceModel}
+        return {"reportID":self.reportID,"reportTime":self.reportTime,"spendTime":self.spendTime,"reportScore":self.reportScore,"deviceModel":self.deviceModel}

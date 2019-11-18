@@ -14,7 +14,7 @@ import time,os
 from datetime import datetime
 from androidpanel.extensions import script,adb,devUtil,db,device
 from androidpanel.models import ScriptConfig, ReportsConfig
-from androidpanel.utils.OtherInfo import getPersonID,paramToNumber,calcScore
+from androidpanel.utils.OtherInfo import getPersonID,paramToNumber,calcScore, timeInterval
 main_bp = Blueprint('main', __name__)
 
 from androidpanel.extensions import socketio,proSchedu,schedu
@@ -141,8 +141,7 @@ def Upload():
     PSSAverage = paramToNumber(request.form.get("PSSAverage"))
     PSSMax = paramToNumber(request.form.get("PSSMax"))
     CPUAverage = request.form.get("CPUAverage")
-    startTime = request.form.get("startTime")
-    print("开始时间为"+startTime)
+    spendTime = timeInterval(request.form.get("startTime"),timestamp)
     if CPUAverage:
         CPUAverage = float(CPUAverage.split(" ")[0])
     CPUMax = request.form.get("CPUMax")
@@ -173,6 +172,7 @@ def Upload():
         measurementPerson = getPersonID(),
         reportID = timestamp,
         reportTime = reportTime,
+        spendTime = spendTime,
         CPUAverage = CPUAverage,
         CPUMax = CPUMax,
         PSSAverage = PSSAverage,

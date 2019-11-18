@@ -35,6 +35,19 @@ def paramToNumber(param):
         return None
     return paramNum
 
+def timeInterval(start,end):
+    if start is None or end is None:
+        return None
+    print(end,start)
+    tmp = int(end) - (int(start) / 1000)
+    if tmp < 60:
+        return "%d s" % tmp
+    elif tmp < 3600:
+        return "%.2f m" % (tmp / 60)
+    elif tmp < 216000:
+        return "%.2f h" % (tmp / 3600)
+
+
 def judgeRange(num):
     themeMap = {-2:["","red","很差"],-1:["layui-bg-orange","darkorange","较差"],
                 0:["layui-bg-green","green","良好"],1:["layui-bg-green","green","较好"],2:["layui-bg-green","green","很好"]}
@@ -53,17 +66,24 @@ def judgeRange(num):
 
 
 def getEvaluation(CPUAverageRange,CPUMaxRange,PSSAverageRange,PSSMaxRange):
-    tmp = {}
+    evaScore = {}
+    # evaDetail = {}
     if CPUAverageRange:
-        tmp["CPU均值"] =judgeRange(CPUAverageRange)
+        evaScore["CPU均值"] =judgeRange(CPUAverageRange)
+        # evaDetail["CPUAverage"] = evaDetail(CPUAverageRange)
     if CPUMaxRange:
-        tmp["CPU峰值"] = judgeRange(CPUMaxRange)
+        evaScore["CPU峰值"] = judgeRange(CPUMaxRange)
+        # evaDetail["CPUMax"] = evaDetail(CPUMaxRange)
     if PSSAverageRange:
-        tmp["内存均值"] = judgeRange(PSSAverageRange)
+        evaScore["内存均值"] = judgeRange(PSSAverageRange)
+        # evaDetail["PSSAverage"] = evaDetail(PSSAverageRange)
     if PSSMaxRange:
-        tmp["内存峰值"] = judgeRange(PSSMaxRange)
-    return tmp
+        evaScore["内存峰值"] = judgeRange(PSSMaxRange)
+        # evaDetail["PSSMax"] = evaDetail(PSSMaxRange)
+    return evaScore
 
+def evaDetail():
+    return None
 
 def calcScore(CPUAverage,CPUMax,PSSAverage,PSSMax,downT,upT,readT,writeT):
 
@@ -78,10 +98,10 @@ def calcScore(CPUAverage,CPUMax,PSSAverage,PSSMax,downT,upT,readT,writeT):
     CPUMAX_PERCENT = current_app.config['CPUMAX_PERCENT']
     PSSAVERAGE_PERCENT = current_app.config['PSSAVERAGE_PERCENT']
     PSSMAX_PERCENT = current_app.config['PSSMAX_PERCENT']
-    DOWNT_PERCENT = current_app.config['DOWNT_PERCENT']
-    UPT_PERCENT = current_app.config['UPT_PERCENT']
-    READT_PERCENT = current_app.config['READT_PERCENT']
-    WRITET_PERCENT = current_app.config['WRITET_PERCENT']
+    # DOWNT_PERCENT = current_app.config['DOWNT_PERCENT']
+    # UPT_PERCENT = current_app.config['UPT_PERCENT']
+    # READT_PERCENT = current_app.config['READT_PERCENT']
+    # WRITET_PERCENT = current_app.config['WRITET_PERCENT']
     if CPUAverage:
         CPUAverageRange = (QA_CPUAverage - CPUAverage) / QA_CPUAverage
     if CPUMax:
