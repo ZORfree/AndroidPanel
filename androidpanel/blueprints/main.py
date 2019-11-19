@@ -9,7 +9,7 @@
 ------------      -------    --------    -----------
 2019/11/13 19:45   Zorfree      1.0         None
 '''
-from flask import render_template, request, Blueprint, send_from_directory, current_app
+from flask import render_template, request, Blueprint
 import time,os
 from datetime import datetime
 from androidpanel.extensions import script,adb,devUtil,db,device

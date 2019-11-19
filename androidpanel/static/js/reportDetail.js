@@ -68,9 +68,9 @@ $.getJSON(window.location.href + 'CPU', function (data) {
                 useHTML: true,
                 headerFormat: '<small>{point.key}</small><table>',
                 pointFormat: '<tr><td style="color: {series.color}">{series.name}: </td>' +
-                    '<td style="text-align: right"><b>{point.y} %</b></td></tr>',
+                    '<td style="text-align: right">{point.y}%</td></tr>',
                 footerFormat: '</table>',
-                valueDecimals: 2,
+                valueDecimals: 1,
                 dateTimeLabelFormats: {
                     millisecond: '%H:%M:%S.%L',
                     second: '%H:%M:%S',
@@ -149,7 +149,7 @@ $.getJSON(window.location.href + 'PSS', function (data) {
                 useHTML: true,
                 headerFormat: '<small>{point.key}</small><table>',
                 pointFormat: '<tr><td style="color: {series.color}">{series.name}: </td>' +
-                    '<td style="text-align: right"><b>{point.y}</b></td></tr>',
+                    '<td style="text-align: right">{point.y}</td></tr>',
                 footerFormat: '</table>',
                 valueDecimals: 2,
                 dateTimeLabelFormats: {
@@ -230,9 +230,9 @@ $.getJSON(window.location.href + 'PSS', function (data) {
                 useHTML: true,
                 headerFormat: '<small>{point.key}</small><table>',
                 pointFormat: '<tr><td style="color: {series.color}">{series.name}: </td>' +
-                    '<td style="text-align: right"><b>{point.y}</b></td></tr>',
+                    '<td style="text-align: right">{point.y}</td></tr>',
                 footerFormat: '</table>',
-                valueDecimals: 2,
+                valueDecimals: 1,
                 dateTimeLabelFormats: {
                     millisecond: '%H:%M:%S.%L',
                     second: '%H:%M:%S',
@@ -311,7 +311,7 @@ $.getJSON(window.location.href + 'NET', function (data) {
                 useHTML: true,
                 headerFormat: '<small>{point.key}</small><table>',
                 pointFormat: '<tr><td style="color: {series.color}">{series.name}: </td>' +
-                '<td style="text-align: right"><b>{point.y} Kb/s</b></td></tr>',
+                '<td style="text-align: right">{point.y}Kb/s</td></tr>',
                 footerFormat: '</table>',
                 valueDecimals: 1,
                 dateTimeLabelFormats: {
@@ -399,7 +399,7 @@ $.getJSON(window.location.href + 'IO', function (data) {
                 useHTML: true,
                 headerFormat: '<small>{point.key}</small><table>',
                 pointFormat: '<tr><td style="color: {series.color}">{series.name}: </td>' +
-                '<td style="text-align: right"><b>{point.y} Kb/s</b></td></tr>',
+                '<td style="text-align: right">{point.y} Kb/s</td></tr>',
                 footerFormat: '</table>',
                 valueDecimals: 1,
                 dateTimeLabelFormats: {
