@@ -14,7 +14,7 @@ import time,os
 from datetime import datetime
 from androidpanel.extensions import script,adb,devUtil,db,device
 from androidpanel.models import ScriptConfig, ReportsConfig
-from androidpanel.utils.OtherInfo import getPersonID,paramToNumber,calcScore, timeInterval
+from androidpanel.utils.OtherInfo import getPersonID,paramToNumber,calcScore, timeInterval, getTempData
 main_bp = Blueprint('main', __name__)
 
 from androidpanel.extensions import socketio,proSchedu,schedu
@@ -121,15 +121,9 @@ def Save():
 
 @main_bp.route('/Upload',methods=['POST'])
 def Upload():
-
-
+    tempData = getTempData()
     timestamp = int(time.time())
     reportTime = time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(timestamp))
-    reportPath = "reports/%d/" % timestamp
-    if not os.path.exists(reportPath):
-        os.makedirs(reportPath)
-    for fileName in request.files:
-        request.files[fileName].save(reportPath + fileName + ".jpg")
 
     deviceModel = ""
     devInfoList = devUtil.devInfo()
@@ -170,6 +164,10 @@ def Upload():
         deviceModel = deviceModel,
         measurementProgram = measurementProgram,
         measurementPerson = getPersonID(),
+        CPUData = tempData.get("CPU"),
+        PSSData = tempData.get("PSS"),
+        NETData = tempData.get("NET"),
+        IOData = tempData.get("IO"),
         reportID = timestamp,
         reportTime = reportTime,
         spendTime = spendTime,
@@ -190,18 +188,21 @@ def Upload():
 
 @main_bp.route('/reports/<int:time>/')
 def Report_Detail(time):
-    # print(time)
+    print(time)
     if os.path.exists("data.db"):
         report = ReportsConfig.query.filter(ReportsConfig.reportID == time).first().getAllconfig()
         print(report)
-
-    return render_template("report/reportdetail.html",report=report)
-
+    return render_template("report/reportdetailv2.html",report=report)
 
 
-@main_bp.route('/reports/<string:time>/<path:filename>')
-def Report_get_img(time,filename):
-    return send_from_directory(current_app.config['REPORT_UPLOAD_PATH'] + "/" +time,filename)
+@main_bp.route('/reports/<string:time>/<string:type>')
+def Report_get_data(time,type):
+    print(time)
+    if os.path.exists("data.db"):
+        report = ReportsConfig.query.filter(ReportsConfig.reportID == time).first().getData(type)
+        print(report)
+    return str(report)
+
 
 @main_bp.route('/Switch/<int:switch>')
 def Switch(switch):
@@ -249,10 +250,11 @@ def refreshPage():
             proSchedu.pause()
             print("暂停进程任务")
     elif adb.proPage:
+        print("进程页")
         if schedu.state() == 1:
             schedu.pause()
             print("暂停整机任务")
-    elif adb.scriptPage:
+    else:
         if proSchedu.state() == 1:
             proSchedu.pause()
             print("暂停进程任务")

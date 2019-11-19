@@ -33,7 +33,11 @@ class ReportsConfig(db.Model):
     reportTime = db.Column(db.String(32))
     spendTime = db.Column(db.String(32))
     reportScore = db.Column(db.Integer)
-    reportEvaluation =db.Column(db.PickleType)
+    reportEvaluation = db.Column(db.PickleType)
+    CPUData = db.Column(db.PickleType)
+    PSSData = db.Column(db.PickleType)
+    NETData = db.Column(db.PickleType)
+    IOData = db.Column(db.PickleType)
     CPUAverageScore = db.Column(db.Integer)
     CPUMaxScore = db.Column(db.Integer)
     PSSAverageScore = db.Column(db.Integer)
@@ -59,3 +63,17 @@ class ReportsConfig(db.Model):
                 "readT":self.readT,"writeT":self.writeT}
     def getSimpleconfig(self):
         return {"reportID":self.reportID,"reportTime":self.reportTime,"spendTime":self.spendTime,"reportScore":self.reportScore,"deviceModel":self.deviceModel}
+
+    def getData(self,type):
+        if type == "CPU":
+            return self.CPUData
+        elif type == "PSS":
+            return self.PSSData
+        elif type == "NET":
+            return self.NETData
+        elif type == "IO":
+            return self.IOData
+        elif type == "reportScore":
+            return self.reportScore
+        else:
+            return None

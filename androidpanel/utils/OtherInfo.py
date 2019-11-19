@@ -11,6 +11,7 @@
 '''
 from flask import  current_app
 from _socket import gethostname
+import os
 
 def getPersonID():
     try:
@@ -18,6 +19,42 @@ def getPersonID():
     except:
         return None
 
+def getTempData():
+
+    tmp = {}
+    for _, _, files in os.walk("AndroidPanel/temp/"):
+        for file in files:
+            with open("AndroidPanel/temp/%s" % file) as f:
+                data = f.read().strip()
+                if data:
+                    listData = []
+                    listData1 = []
+                    listData2 = []
+                    if file == "CPU.txt" or file == "PSS.txt":
+                        for i in data.split("\n"):
+                            timestamp, data = i.split("  ")
+                            timestamp = int(timestamp)
+                            data = float(data)
+                            listData.append([timestamp, data])
+                    else:
+                        for i in data.split("\n"):
+                            timestamp, data1, data2 = i.split("  ")
+                            timestamp = int(timestamp)
+                            data1 = float(data1)
+                            data2 = float(data2)
+                            listData1.append([timestamp, data1])
+                            listData2.append([timestamp, data2])
+                        listData = [listData1,listData2]
+                    tmp[os.path.splitext(file)[0]] = listData
+                print(os.path.splitext(file))
+                print(tmp)
+                print("\n")
+
+    return tmp
+
+
+def reportDir(dirname):
+    return os.system("C:\Windows\System32\WindowsPowerShell\\v1.0\powershell.exe cp -r reports/temp/ reports/%d/" % dirname)
 
 def paramToNumber(param):
     if param is None:

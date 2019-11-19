@@ -36,6 +36,7 @@ def connected_msg():
 
 @socketio.on('connect',namespace="/proPage")
 def connected_msg_pro():
+    proSchedu.emptyData()
     print('Process Connect')
     proScheduState = proSchedu.state()
     if proScheduState == 0:

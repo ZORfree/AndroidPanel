@@ -3,5 +3,7 @@
   <component name="Encoding">
     <file url="file://$PROJECT_DIR$/androidpanel/static/js/base.js" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/androidpanel/static/js/process.js" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/androidpanel/static/js/reportDetail.js" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/reports/1574063397/CPU.txt" charset="UTF-8" />
   </component>
 </project>
